@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, width=device-width" />
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'index.css' %}" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inria+Sans:wght@400&display=swap" />
+  </head>
+
+  <body>
+    <div class="slide-169-1">
+      <div class="main">
+        <div class="main-frame">
+          <h2 class="main-heading">Import your list from HiAnime.to to MyAnimeList.net</h2>
+          <div class="main-desc">This program automates the process of transferring anime lists from HiAnime.to to MyAnimeList.net.</div>
+          <div class="hline"></div>
+        </div>
+        <form id="transferForm" class="form">
+          {% csrf_token %}
+          <div class="connect-component">
+            <div class="comp-heading">
+              <div class="sub">Step 1: Authorize MyAnimeList.net to gain access to your /////////////</div>
+            </div>
+            <div class="comp-input-frame">
+              <button class="button" type="button" onclick="openOauth()">
+                <div class="button-text">Connect MyAnimeList.net</div>
+              </button>
+              <div class="status" id="oauth-status">Status: {{oauth_status}}</div>
+            </div>
+          </div>
+          <div class="guide-component">
+            <div class="comp-heading1">
+              <div class="sub">Step 2: Paste connect.sid cookie from <a href="https://hianime.to/">HiAnime.to</a> to import your /////////////</div>
+              <a class="showme">Show me how</a>
+            </div>
+            <div class="comp-guide">
+              <div class="instructions">
+                <div class="using-browser-go-container">
+                  <p class="using-browser">Using browser:</p>
+                  <ul class="guidelins">
+                    <li class="guide-text">Go to <a href="https://hianime.to/">HiAnime.to</a>.</li>
+                    <li class="guide-text">Press F12 to open the developer tools.</li>
+                    <li class="guide-text">Go to the Application tab.</li>
+                    <li class="guide-text">Click on Cookies > https://hianime.to.</li>
+                    <li class="guide-text">Copy the value of the connect.sid cookie.</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="vline"></div>
+              <div class="instructions">
+                <div class="using-browser-go-container">
+                  <p class="using-browser">Using Extension:</p>
+                  <ul class="guidelins">
+                    <li class="guide-text">Install <a href="https://cookie-editor.com/">Cookie-Editor</a>.</li>
+                    <li class="guide-text">Go to <a href="https://hianime.to/">HiAnime.to</a>.</li>
+                    <li class="guide-text">Click on the extension icon.</li>
+                    <li class="guide-text">Click on the connect.sid cookie.</li>
+                    <li class="guide-text">Copy the value of the connect.sid cookie.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="input-component">
+              <div class="input-desc">connect.sid cookie:</div>
+              <input class="input" name="hi_cookie" placeholder="HiAnimeCookie" value="{{ hi_cookie }}" type="text" />
+            </div>
+          </div>
+          <div class="connect-component">
+            <div class="comp-heading2">
+              <div class="sub">Step 3: Transfer your /////////////</div>
+            </div>
+            <div class="comp-input-frame">
+              <button class="button" type="button" id="submit">
+                <div class="button-text">Transfer</div>
+              </button>
+              <div class="status" id="transfer-status"></div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      // Check form fields on load
+      window.onload = function () {
+        checkOauthStatus();
+        checkField();
+      };
+
+      function checkOauthStatus() {
+        if (document.getElementById("oauth-status").innerText !== "Status: Connected") {
+          document.getElementsByClassName("button")[0].disabled = false;
+          enableHover(document.getElementsByClassName("button")[0]);
+        } else {
+          document.getElementsByClassName("button")[0].disabled = true;
+          disableHover(document.getElementsByClassName("button")[0]);
+          document.getElementById("oauth-status").style.color = "hsl(120, 100%, 80%)";
+        }
+        checkFilled();
+      }
+
+      function disableHover(button) {
+        button.style.cursor = "not-allowed";
+        button.disabled = true;
+        button.classList.remove("button-hover");
+      }
+
+      function enableHover(button) {
+        button.style.cursor = "pointer";
+        button.disabled = false;
+        button.classList.add("button-hover");
+      }
+
+      function checkFilled() {
+        var status = "Status:";
+        if (document.getElementsByClassName("input")[0].value === "") {
+          status += " Cookie field empty";
+        }
+        if (document.getElementById("oauth-status").innerText !== "Status: Connected") {
+          status += " MyAnimeList.net Not Connected";
+        }
+        if (status === "Status:") {
+          status += " Ready to Transfer";
+          document.getElementById("transfer-status").style.color = "hsl(120, 100%, 80%)";
+          enableHover(document.getElementById("submit"));
+        } else {
+          document.getElementById("transfer-status").style.color = "hsl(0, 100%, 80%)";
+          disableHover(document.getElementById("submit"));
+        }
+        document.getElementById("transfer-status").innerText = status;
+      }
+
+      function checkField() {
+        if (document.getElementsByClassName("input")[0].value !== "") {
+          document.getElementsByClassName("input")[0].style.borderColor = "hsl(237, 100%, 80%)";
+        } else {
+          document.getElementsByClassName("input")[0].style.borderColor = "hsl(0, 100%, 80%)";
+        }
+      }
+
+      document.getElementsByClassName("input")[0].oninput = function () {
+        checkField();
+        checkFilled();
+      };
+
+      document.getElementsByClassName("showme")[0].addEventListener("click", function () {
+        guide = document.getElementsByClassName("comp-guide")[0];
+        guide.style.display = guide.style.display === "flex" ? "none" : "flex";
+      });
+
+      document.getElementById("submit").addEventListener("click", function () {
+        disableHover(document.getElementById("submit"));
+        document.getElementById("transfer-status").innerText = "Transferring...";
+
+        var formData = new FormData(document.getElementById("transferForm"));
+
+        fetch("/start", {
+          method: "POST",
+          body: formData,
+          headers: {
+            "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("transfer-status").innerText = data.status;
+            document.getElementById("transfer-status").style.color = "hsl(120, 100%, 80%)";
+            enableHover(document.getElementById("submit"));
+          });
+      });
+
+      function openOauth() {
+        window.location.href = "/oauth";
+      }
+    </script>
+  </body>
+</html>
