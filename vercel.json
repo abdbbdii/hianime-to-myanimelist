@@ -5,8 +5,9 @@
             "src": "HiAnime_to_MAL/wsgi.py",
             "use": "@vercel/python",
             "config": {
-                "maxLambdaSize": "20mb",
-                "runtime": "python3.12"
+                "maxLambdaSize": "35mb",
+                "runtime": "python3.12",
+                "maxDuration": 60
             }
         }
     ],
