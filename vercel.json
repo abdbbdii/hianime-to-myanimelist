@@ -1,0 +1,19 @@
+{
+    "version": 2,
+    "builds": [
+        {
+            "src": "HiAnime_to_MAL/wsgi.py",
+            "use": "@vercel/python",
+            "config": {
+                "maxLambdaSize": "20mb",
+                "runtime": "python3.12"
+            }
+        }
+    ],
+    "routes": [
+        {
+            "src": "/(.*)",
+            "dest": "HiAnime_to_MAL/wsgi.py"
+        }
+    ]
+}
