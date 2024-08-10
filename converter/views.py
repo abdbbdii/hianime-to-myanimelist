@@ -49,21 +49,6 @@ def get_new_code_verifier() -> str:
     return token[:128]
 
 
-# def start(request):
-#     if request.POST.get("hi_cookie"):
-#         request.session["hi_cookie"] = request.POST.get("hi_cookie")
-#         headers = {"Authorization": f"Bearer {request.session['access_token']}"}
-
-#         hi_list = get_hianime_list.get_list({"connect.sid": request.session["hi_cookie"]})
-#         populated_list = populate_list.populate_list(hi_list, headers)
-#         # return JsonResponse(populated_list)
-#         import_to_mal.to_mal(populated_list["mal_list"], headers)
-#         return HttpResponse("Done")
-
-#     else:
-#         return HttpResponse("No cookies provided", status=400)
-
-
 async def start_async(request):
     try:
         headers = {"Authorization": f"Bearer {request.session['access_token']}"}
@@ -76,6 +61,7 @@ async def start_async(request):
         return {"status": "Transfer Successful!"}
     except Exception as e:
         return {"status": "Failed", "error": str(e)}
+
 
 def start(request):
     if request.POST.get("hi_cookie") and check_cookie.is_valid({"connect.sid": request.POST.get("hi_cookie")}):

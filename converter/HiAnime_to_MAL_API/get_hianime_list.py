@@ -32,7 +32,6 @@
 
 import aiohttp
 from bs4 import BeautifulSoup
-import asyncio
 from typing import Dict, List
 
 HIANIME_URL = "https://hianime.to"
