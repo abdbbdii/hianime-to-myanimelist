@@ -210,53 +210,47 @@
       //     enableInput(document.getElementById("input-text"));
       //   }
       // });
-      document.getElementById("submit").addEventListener("click", async function () {
+      document.getElementById("submit").addEventListener("click", function () {
         disableButton(document.getElementById("submit"));
         disableInput(document.getElementById("input-text"));
 
         const formData = new FormData(document.getElementById("transferForm"));
         formData.append("hi_cookie", document.getElementById("input-text").value);
 
-        async function makeRequest(url, statusMessage) {
+        function makeRequest(url, statusMessage) {
           document.getElementById("transfer-status").innerText = statusMessage;
 
-          // Ensure hi_cookie is included
-          const response = await fetch(url, {
+          return fetch(url, {
             method: "POST",
             body: formData,
             headers: {
               "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
             },
+          }).then((response) =>
+            response.json().then((data) => {
+              document.getElementById("transfer-status").innerText = data.status;
+              if (response.status !== 200) {
+                throw new Error(data.status);
+              }
+              return data;
+            })
+          );
+        }
+
+        makeRequest("/get-hi", "Requesting list...")
+          .then(() => makeRequest("/prepare", "Processing list..."))
+          .then(() => makeRequest("/post-mal", "Importing to MAL..."))
+          .then(() => {
+            document.getElementById("transfer-status").style.color = "hsl(120, 100%, 80%)";
+          })
+          .catch((error) => {
+            document.getElementById("transfer-status").innerText = error.message;
+            document.getElementById("transfer-status").style.color = "hsl(0, 100%, 80%)";
+          })
+          .finally(() => {
+            enableButton(document.getElementById("submit"));
+            enableInput(document.getElementById("input-text"));
           });
-
-          const data = await response.json();
-          document.getElementById("transfer-status").innerText = data.status;
-
-          if (response.status !== 200) {
-            throw new Error(data.status);
-          }
-
-          return data;
-        }
-
-        try {
-          // Step 1: Request the HiAnime list
-          await makeRequest("/get-hi", "Requesting list...");
-
-          // Step 2: Find MAL IDs
-          await makeRequest("/prepare", "Processing list...");
-
-          // Step 3: Import to MAL
-          await makeRequest("/post-mal", "Importing to MAL...");
-
-          document.getElementById("transfer-status").style.color = "hsl(120, 100%, 80%)";
-        } catch (error) {
-          document.getElementById("transfer-status").innerText = error.message;
-          document.getElementById("transfer-status").style.color = "hsl(0, 100%, 80%)";
-        } finally {
-          enableButton(document.getElementById("submit"));
-          enableInput(document.getElementById("input-text"));
-        }
       });
 
       function openOauth() {

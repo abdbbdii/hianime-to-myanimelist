@@ -23,7 +23,7 @@ import asyncio
 from aiohttp import ClientSession
 
 error_list = {"watching": [], "on_hold": [], "plan_to_watch": [], "dropped": [], "completed": []}
-CONCURRENCY_LIMIT = 3
+CONCURRENCY_LIMIT = 4
 
 async def fetch_anime_id(semaphore, session: ClientSession, title: str, headers: dict):
     url = "https://api.myanimelist.net/v2/anime"
