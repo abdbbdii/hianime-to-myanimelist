@@ -23,7 +23,7 @@
               <div class="sub">Step 1: Authorize MyAnimeList.net to gain access to your /////////////</div>
             </div>
             <div class="comp-input-frame">
-              <button class="button" type="button" onclick="openOauth()">
+              <button class="button" type="button" onclick="openOauth()" id="oauth-button">
                 <div class="button-text">Connect MyAnimeList.net</div>
               </button>
               <div class="status" id="oauth-status">Status: {{oauth_status}}</div>
@@ -63,7 +63,7 @@
             </div>
             <div class="input-component">
               <div class="input-desc">connect.sid cookie:</div>
-              <input class="input" name="hi_cookie" placeholder="HiAnimeCookie" value="{{ hi_cookie }}" type="text" />
+              <input class="input" id="input-text" name="hi_cookie" placeholder="HiAnimeCookie" value="{{ hi_cookie }}" type="text" />
             </div>
           </div>
           <div class="connect-component">
@@ -90,31 +90,39 @@
 
       function checkOauthStatus() {
         if (document.getElementById("oauth-status").innerText !== "Status: Connected") {
-          document.getElementsByClassName("button")[0].disabled = false;
-          enableHover(document.getElementsByClassName("button")[0]);
+          enableButton(document.getElementById("oauth-button"));
         } else {
-          document.getElementsByClassName("button")[0].disabled = true;
-          disableHover(document.getElementsByClassName("button")[0]);
+          disableButton(document.getElementById("oauth-button"));
           document.getElementById("oauth-status").style.color = "hsl(120, 100%, 80%)";
         }
         checkFilled();
       }
 
-      function disableHover(button) {
-        button.style.cursor = "not-allowed";
-        button.disabled = true;
-        button.classList.remove("button-hover");
+      function disableButton(element) {
+        element.style.cursor = "not-allowed";
+        element.disabled = true;
+        element.classList.remove("button-hover");
       }
 
-      function enableHover(button) {
-        button.style.cursor = "pointer";
-        button.disabled = false;
-        button.classList.add("button-hover");
+      function enableButton(element) {
+        element.style.cursor = "pointer";
+        element.disabled = false;
+        element.classList.add("button-hover");
+      }
+
+      function disableInput(element) {
+        element.style.cursor = "not-allowed";
+        element.disabled = true;
+      }
+
+      function enableInput(element) {
+        element.style.cursor = "pointer";
+        element.disabled = false;
       }
 
       function checkFilled() {
         var status = "Status:";
-        if (document.getElementsByClassName("input")[0].value === "") {
+        if (document.getElementById("input-text").value === "") {
           status += " Cookie field empty";
         }
         if (document.getElementById("oauth-status").innerText !== "Status: Connected") {
@@ -123,23 +131,23 @@
         if (status === "Status:") {
           status += " Ready to Transfer";
           document.getElementById("transfer-status").style.color = "hsl(120, 100%, 80%)";
-          enableHover(document.getElementById("submit"));
+          enableButton(document.getElementById("submit"));
         } else {
           document.getElementById("transfer-status").style.color = "hsl(0, 100%, 80%)";
-          disableHover(document.getElementById("submit"));
+          disableButton(document.getElementById("submit"));
         }
         document.getElementById("transfer-status").innerText = status;
       }
 
       function checkField() {
-        if (document.getElementsByClassName("input")[0].value !== "") {
-          document.getElementsByClassName("input")[0].style.borderColor = "hsl(237, 100%, 80%)";
+        if (document.getElementById("input-text").value !== "") {
+          document.getElementById("input-text").style.borderColor = "hsl(237, 100%, 80%)";
         } else {
-          document.getElementsByClassName("input")[0].style.borderColor = "hsl(0, 100%, 80%)";
+          document.getElementById("input-text").style.borderColor = "hsl(0, 100%, 80%)";
         }
       }
 
-      document.getElementsByClassName("input")[0].oninput = function () {
+      document.getElementById("input-text").oninput = function () {
         checkField();
         checkFilled();
       };
@@ -149,25 +157,106 @@
         guide.style.display = guide.style.display === "flex" ? "none" : "flex";
       });
 
-      document.getElementById("submit").addEventListener("click", function () {
-        disableHover(document.getElementById("submit"));
-        document.getElementById("transfer-status").innerText = "Transferring...";
+      // document.getElementById("submit").addEventListener("click", async function () {
+      //   disableButton(document.getElementById("submit"));
+      //   disableInput(document.getElementById("input-text"));
+      //   document.getElementById("transfer-status").innerText = "Requesting list...";
 
-        var formData = new FormData(document.getElementById("transferForm"));
+      //   var formData = new FormData(document.getElementById("transferForm"));
 
-        fetch("/start", {
-          method: "POST",
-          body: formData,
-          headers: {
-            "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
-          },
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            document.getElementById("transfer-status").innerText = data.status;
-            document.getElementById("transfer-status").style.color = "hsl(120, 100%, 80%)";
-            enableHover(document.getElementById("submit"));
+      //   try {
+      //     // Step 1: Request the HiAnime list
+      //     let response = await fetch("/get-list", {
+      //       method: "POST",
+      //       body: formData,
+      //       headers: {
+      //         "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
+      //       },
+      //     });
+      //     let data = await response.json();
+      //     document.getElementById("transfer-status").innerText = data.status;
+      //     if (response.status !== 200) throw new Error(data.status);
+
+      //     // Step 2: Find MAL IDs
+      //     document.getElementById("transfer-status").innerText = "Finding MAL IDs...";
+      //     response = await fetch("/populate-list", {
+      //       method: "POST",
+      //       headers: {
+      //         "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
+      //       },
+      //     });
+      //     data = await response.json();
+      //     document.getElementById("transfer-status").innerText = data.status;
+      //     if (response.status !== 200) throw new Error(data.status);
+
+      //     // Step 3: Import to MAL
+      //     document.getElementById("transfer-status").innerText = "Importing to MAL...";
+      //     response = await fetch("/import-to-mal", {
+      //       method: "POST",
+      //       headers: {
+      //         "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
+      //       },
+      //     });
+      //     data = await response.json();
+      //     document.getElementById("transfer-status").innerText = data.status;
+      //     if (response.status !== 200) throw new Error(data.status);
+
+      //     document.getElementById("transfer-status").style.color = "hsl(120, 100%, 80%)";
+      //   } catch (error) {
+      //     document.getElementById("transfer-status").innerText = error.message;
+      //     document.getElementById("transfer-status").style.color = "hsl(0, 100%, 80%)";
+      //   } finally {
+      //     enableButton(document.getElementById("submit"));
+      //     enableInput(document.getElementById("input-text"));
+      //   }
+      // });
+      document.getElementById("submit").addEventListener("click", async function () {
+        disableButton(document.getElementById("submit"));
+        disableInput(document.getElementById("input-text"));
+
+        const formData = new FormData(document.getElementById("transferForm"));
+        formData.append("hi_cookie", document.getElementById("input-text").value);
+
+        async function makeRequest(url, statusMessage) {
+          document.getElementById("transfer-status").innerText = statusMessage;
+
+          // Ensure hi_cookie is included
+          const response = await fetch(url, {
+            method: "POST",
+            body: formData,
+            headers: {
+              "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
+            },
           });
+
+          const data = await response.json();
+          document.getElementById("transfer-status").innerText = data.status;
+
+          if (response.status !== 200) {
+            throw new Error(data.status);
+          }
+
+          return data;
+        }
+
+        try {
+          // Step 1: Request the HiAnime list
+          await makeRequest("/get-hi", "Requesting list...");
+
+          // Step 2: Find MAL IDs
+          await makeRequest("/prepare", "Processing list...");
+
+          // Step 3: Import to MAL
+          await makeRequest("/post-mal", "Importing to MAL...");
+
+          document.getElementById("transfer-status").style.color = "hsl(120, 100%, 80%)";
+        } catch (error) {
+          document.getElementById("transfer-status").innerText = error.message;
+          document.getElementById("transfer-status").style.color = "hsl(0, 100%, 80%)";
+        } finally {
+          enableButton(document.getElementById("submit"));
+          enableInput(document.getElementById("input-text"));
+        }
       });
 
       function openOauth() {

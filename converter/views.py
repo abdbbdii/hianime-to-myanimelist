@@ -6,7 +6,6 @@ from datetime import datetime
 import dotenv
 import requests
 from django.shortcuts import HttpResponse, redirect, render
-from asgiref.sync import async_to_sync
 from django.http import JsonResponse
 
 from .HiAnime_to_MAL_API import get_hianime_list, populate_list, import_to_mal, check_cookie
@@ -49,31 +48,50 @@ def get_new_code_verifier() -> str:
     return token[:128]
 
 
-async def start_async(request):
+from asgiref.sync import async_to_sync
+
+
+def get_hi(request):
+    try:
+        hi_cookie = request.POST.get("hi_cookie")
+        if not hi_cookie:
+            return JsonResponse({"status": "Cookie not provided"}, status=400)
+        if not check_cookie.is_valid({"connect.sid": hi_cookie}):
+            return JsonResponse({"status": "Invalid cookie"}, status=400)
+        request.session["hi_cookie"] = hi_cookie
+
+        hi_list = async_to_sync(get_hianime_list.get_list)({"connect.sid": hi_cookie})
+        request.session["hi_list"] = hi_list
+        return JsonResponse({"status": "List Retrieved"})
+    except Exception as e:
+        return JsonResponse({"status": f"Failed to retrieve list: {str(e)}"}, status=500)
+
+
+def prepare(request):
     try:
         headers = {"Authorization": f"Bearer {request.session['access_token']}"}
-        print("Requesting list")
-        hi_list = await get_hianime_list.get_list({"connect.sid": request.session["hi_cookie"]})
-        print("Finding MAL IDs")
-        populated_list = await populate_list.populate_list(hi_list, headers)
-        print("Importing to MAL")
-        await import_to_mal.to_mal(populated_list["mal_list"], headers)
-        return {"status": "Transfer Successful!"}
+        hi_list = request.session.get("hi_list")
+        if not hi_list:
+            return JsonResponse({"status": "No HiAnime list found in session"}, status=400)
+
+        populated_list = async_to_sync(populate_list.populate_list)(hi_list, headers)
+        request.session["mal_list"] = populated_list
+        return JsonResponse({"status": "MAL IDs Found"})
     except Exception as e:
-        return {"status": f"Failed: {str(e)}"}
+        return JsonResponse({"status": f"Failed to find MAL IDs: {str(e)}"}, status=500)
 
 
-def start(request):
-    if request.POST.get("hi_cookie") and check_cookie.is_valid({"connect.sid": request.POST.get("hi_cookie")}):
-        request.session["hi_cookie"] = request.POST.get("hi_cookie")
-        result = async_to_sync(start_async)(request)
-        print(result)
-        if result["status"] == "Transfer Successful!":
-            return JsonResponse(result)
-        else:
-            return JsonResponse(result, status=500)
-    else:
-        return JsonResponse({"status": "Invalid Cookie"}, status=400)
+def post_mal(request):
+    try:
+        headers = {"Authorization": f"Bearer {request.session['access_token']}"}
+        populated_list = request.session.get("mal_list")
+        if not populated_list:
+            return JsonResponse({"status": "No populated list found in session"}, status=400)
+
+        async_to_sync(import_to_mal.to_mal)(populated_list["mal_list"], headers)
+        return JsonResponse({"status": "Transfer Successful!"})
+    except Exception as e:
+        return JsonResponse({"status": f"Failed to import to MAL: {str(e)}"}, status=500)
 
 
 def index(request):

@@ -1,6 +1,6 @@
-# import requests
+import requests
 
-# error_list = {"watching": [], "on_hold": [], "plan_to_watch": [], "dropped": [], "completed": []}
+error_list = {"watching": [], "on_hold": [], "plan_to_watch": [], "dropped": [], "completed": []}
 
 
 # def populate_list(hi_list, headers):
@@ -23,7 +23,7 @@ import asyncio
 from aiohttp import ClientSession
 
 error_list = {"watching": [], "on_hold": [], "plan_to_watch": [], "dropped": [], "completed": []}
-CONCURRENCY_LIMIT = 5  # Adjust the concurrency limit as needed
+CONCURRENCY_LIMIT = 3
 
 async def fetch_anime_id(semaphore, session: ClientSession, title: str, headers: dict):
     url = "https://api.myanimelist.net/v2/anime"
@@ -50,7 +50,7 @@ async def fetch_anime_id(semaphore, session: ClientSession, title: str, headers:
 
 async def populate_list(hi_list, headers):
     mal_list = {}
-    semaphore = asyncio.Semaphore(CONCURRENCY_LIMIT)  # Control the number of concurrent requests
+    semaphore = asyncio.Semaphore(CONCURRENCY_LIMIT)
 
     async with aiohttp.ClientSession() as session:
         tasks = []
