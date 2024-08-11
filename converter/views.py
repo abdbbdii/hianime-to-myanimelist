@@ -60,13 +60,14 @@ async def start_async(request):
         await import_to_mal.to_mal(populated_list["mal_list"], headers)
         return {"status": "Transfer Successful!"}
     except Exception as e:
-        return {"status": "Failed", "error": str(e)}
+        return {"status": f"Failed: {str(e)}"}
 
 
 def start(request):
     if request.POST.get("hi_cookie") and check_cookie.is_valid({"connect.sid": request.POST.get("hi_cookie")}):
         request.session["hi_cookie"] = request.POST.get("hi_cookie")
         result = async_to_sync(start_async)(request)
+        print(result)
         if result["status"] == "Transfer Successful!":
             return JsonResponse(result)
         else:

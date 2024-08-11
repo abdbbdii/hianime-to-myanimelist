@@ -66,4 +66,4 @@ async def populate_list(hi_list, headers):
                 error_list[status].append(title)
                 print("Not found")
 
-    return mal_list
+    return {'mal_list': mal_list, 'error_list': error_list}
