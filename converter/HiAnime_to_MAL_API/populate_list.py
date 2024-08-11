@@ -1,6 +1,6 @@
-import requests
+# import requests
 
-error_list = {"watching": [], "on_hold": [], "plan_to_watch": [], "dropped": [], "completed": []}
+# error_list = {"watching": [], "on_hold": [], "plan_to_watch": [], "dropped": [], "completed": []}
 
 
 # def populate_list(hi_list, headers):

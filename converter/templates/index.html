@@ -157,59 +157,6 @@
         guide.style.display = guide.style.display === "flex" ? "none" : "flex";
       });
 
-      // document.getElementById("submit").addEventListener("click", async function () {
-      //   disableButton(document.getElementById("submit"));
-      //   disableInput(document.getElementById("input-text"));
-      //   document.getElementById("transfer-status").innerText = "Requesting list...";
-
-      //   var formData = new FormData(document.getElementById("transferForm"));
-
-      //   try {
-      //     // Step 1: Request the HiAnime list
-      //     let response = await fetch("/get-list", {
-      //       method: "POST",
-      //       body: formData,
-      //       headers: {
-      //         "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
-      //       },
-      //     });
-      //     let data = await response.json();
-      //     document.getElementById("transfer-status").innerText = data.status;
-      //     if (response.status !== 200) throw new Error(data.status);
-
-      //     // Step 2: Find MAL IDs
-      //     document.getElementById("transfer-status").innerText = "Finding MAL IDs...";
-      //     response = await fetch("/populate-list", {
-      //       method: "POST",
-      //       headers: {
-      //         "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
-      //       },
-      //     });
-      //     data = await response.json();
-      //     document.getElementById("transfer-status").innerText = data.status;
-      //     if (response.status !== 200) throw new Error(data.status);
-
-      //     // Step 3: Import to MAL
-      //     document.getElementById("transfer-status").innerText = "Importing to MAL...";
-      //     response = await fetch("/import-to-mal", {
-      //       method: "POST",
-      //       headers: {
-      //         "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
-      //       },
-      //     });
-      //     data = await response.json();
-      //     document.getElementById("transfer-status").innerText = data.status;
-      //     if (response.status !== 200) throw new Error(data.status);
-
-      //     document.getElementById("transfer-status").style.color = "hsl(120, 100%, 80%)";
-      //   } catch (error) {
-      //     document.getElementById("transfer-status").innerText = error.message;
-      //     document.getElementById("transfer-status").style.color = "hsl(0, 100%, 80%)";
-      //   } finally {
-      //     enableButton(document.getElementById("submit"));
-      //     enableInput(document.getElementById("input-text"));
-      //   }
-      // });
       document.getElementById("submit").addEventListener("click", function () {
         disableButton(document.getElementById("submit"));
         disableInput(document.getElementById("input-text"));
