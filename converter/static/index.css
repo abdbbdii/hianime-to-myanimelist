@@ -99,7 +99,7 @@ a {
 .button {
   cursor: pointer;
   border: 1px dashed var(--color-cornflowerblue);
-  padding: var(--padding-sm) 3rem;
+  padding: var(--padding-sm) 1rem;
   color: var(--color-cornflowerblue);
   background-color: transparent;
   overflow: hidden;
@@ -107,7 +107,7 @@ a {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  min-width: 15rem;
+  min-width: 12rem;
 }
 .buymeacoffee {
   border: 1px dashed var(--color-cornflowerblue);
@@ -286,6 +286,7 @@ a {
 .form,
 .main,
 .slide-169-1 {
+  padding: 0px;
   display: flex;
   align-items: flex-start;
   min-height: 100vh;
