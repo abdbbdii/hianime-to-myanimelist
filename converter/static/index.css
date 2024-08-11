@@ -99,7 +99,7 @@ a {
 .button {
   cursor: pointer;
   border: 1px dashed var(--color-cornflowerblue);
-  padding: var(--padding-sm) 1rem;
+  padding: var(--padding-sm) 0px;
   color: var(--color-cornflowerblue);
   background-color: transparent;
   overflow: hidden;
@@ -107,7 +107,7 @@ a {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  min-width: 12rem;
+  min-width: 10rem;
 }
 .buymeacoffee {
   border: 1px dashed var(--color-cornflowerblue);
