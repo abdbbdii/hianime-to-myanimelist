@@ -16,7 +16,6 @@ body {
   --gap-xl: 1.25rem;
   --gap-11xl: 1.875rem;
   --gap-mini: 0.937rem;
-  --padding-xl: 1.25rem;
   --padding-13xl: 2rem;
   --padding-5xl: 1.5rem;
   --padding-sm: 0.875rem;
@@ -108,16 +107,6 @@ a {
   align-items: center;
   justify-content: center;
   min-width: 10rem;
-}
-.buymeacoffee {
-  border: 1px dashed var(--color-cornflowerblue);
-  padding: var(--padding-sm) 3rem;
-  color: var(--color-cornflowerblue);
-  background-color: transparent;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  min-width: 15rem;
 }
 .button-hover:hover {
   background-color: var(--color-cornflowerblue);
@@ -286,7 +275,7 @@ a {
 .form,
 .main,
 .slide-169-1 {
-  padding: 0px 0px;
+  padding: 0px;
   display: flex;
   align-items: flex-start;
   min-height: 100vh;
@@ -325,7 +314,7 @@ a {
   max-width: 100%;
   flex-direction: row;
   justify-content: center;
-  padding: 0px 0px;
+  padding: 0px;
   line-height: normal;
   letter-spacing: normal;
 }
@@ -376,7 +365,7 @@ a {
     font-size: 1rem;
   }
   .comp-input-frame {
-    padding-right: var(--padding-xl);
+    padding-right: var(--gap-xl);
     box-sizing: border-box;
   }
 }
