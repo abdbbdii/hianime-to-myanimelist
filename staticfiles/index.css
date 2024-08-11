@@ -99,7 +99,7 @@ a {
 .button {
   cursor: pointer;
   border: 1px dashed var(--color-cornflowerblue);
-  padding: var(--padding-sm) 3rem;
+  padding: var(--padding-sm) 0px;
   color: var(--color-cornflowerblue);
   background-color: transparent;
   overflow: hidden;
@@ -107,7 +107,7 @@ a {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  min-width: 15rem;
+  min-width: 10rem;
 }
 .button-hover:hover {
   background-color: var(--color-cornflowerblue);
@@ -276,6 +276,7 @@ a {
 .form,
 .main,
 .slide-169-1 {
+  padding: 0px 0px;
   display: flex;
   align-items: flex-start;
   min-height: 100vh;
@@ -314,7 +315,7 @@ a {
   max-width: 100%;
   flex-direction: row;
   justify-content: center;
-  padding: 0 var(--padding-xl);
+  padding: 0px 0px;
   line-height: normal;
   letter-spacing: normal;
 }
