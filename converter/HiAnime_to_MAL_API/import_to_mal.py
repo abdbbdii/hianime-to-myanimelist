@@ -14,4 +14,10 @@ async def to_mal(mal_list, headers):
             url = f"https://api.myanimelist.net/v2/anime/{id}/my_list_status"
             task = asyncio.create_task(session.put(url, headers=headers, data=anime))
             tasks.append(task)
-        await asyncio.gather(*tasks)
+        trasnfers = await asyncio.gather(*tasks)
+        # print(transfers)
+        for transfer in trasnfers:
+            if transfer.status == 200:
+                print(f"Successfully transferred {transfer.url}")
+            else:
+                print(f"Failed to transfer {transfer.url}: {transfer.status}")
