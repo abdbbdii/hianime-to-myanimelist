@@ -7,7 +7,7 @@
 #     mal_list = {}
 #     for status, titles in hi_list.items():
 #         for title in titles:
-#             print(title)
+#             print(title, end=": ")
 #             body = {"q": title, "limit": 1}
 #             mal_anime_id = requests.get("https://api.myanimelist.net/v2/anime", headers=headers, params=body).json()["data"]
 #             if not mal_anime_id:
@@ -17,54 +17,53 @@
 #             mal_list[mal_anime_id] = {
 #                 "status": status,
 #             }
-
-#     return {"mal_list": mal_list, "error_list": error_list}
-
+#             print(mal_anime_id)
 import aiohttp
 import asyncio
-from aiohttp import ClientError, ClientTimeout
+from aiohttp import ClientSession
 
 error_list = {"watching": [], "on_hold": [], "plan_to_watch": [], "dropped": [], "completed": []}
 
-async def fetch_anime_id(session, url, headers, params, retries=3):
-    for attempt in range(retries):
-        try:
-            async with session.get(url, headers=headers, params=params, timeout=ClientTimeout(total=10)) as response:
-                if response.status != 200:
-                    print(f"Request failed with status {response.status} on attempt {attempt + 1}")
-                    await asyncio.sleep(2 ** attempt)
-                    continue
+async def fetch_anime_id(session: ClientSession, title: str, headers: dict):
+    url = "https://api.myanimelist.net/v2/anime"
+    params = {"q": title, "limit": 1}
 
-                json_response = await response.json()
-                return json_response.get("data")
-        except (ClientError, asyncio.TimeoutError) as e:
-            print(f"Exception occurred: {e} on attempt {attempt + 1}")
-            await asyncio.sleep(2 ** attempt)  # Exponential backoff
+    try:
+        async with session.get(url, headers=headers, params=params) as response:
+            if response.status != 200:
+                print(f"Failed to fetch {title}: {response.status}")
+                return None
 
-    print(f"Failed to fetch data after {retries} attempts")
-    return None
+            data = await response.json()
+            mal_anime_id = data.get("data", [])
+
+            if not mal_anime_id:
+                return None
+
+            return mal_anime_id[0]["node"]["id"]
+
+    except aiohttp.ClientError as e:
+        print(f"Request error for {title}: {e}")
+        return None
 
 async def populate_list(hi_list, headers):
     mal_list = {}
+
     async with aiohttp.ClientSession() as session:
         tasks = []
         for status, titles in hi_list.items():
             for title in titles:
-                url = "https://api.myanimelist.net/v2/anime"
-                params = {"q": title, "limit": 1}
-                print(f"Creating task for: {title}")
-                tasks.append((status, title, fetch_anime_id(session, url, headers, params)))
+                tasks.append(fetch_anime_id(session, title, headers))
 
-        for status, title, task in tasks:
-            mal_anime_id = await task
-            if not mal_anime_id:
-                error_list[status].append(title)
+        results = await asyncio.gather(*tasks)
+
+        for (status, title), mal_anime_id in zip(((s, t) for s in hi_list for t in hi_list[s]), results):
+            print(title, end=": ")
+            if mal_anime_id:
+                mal_list[mal_anime_id] = {"status": status}
+                print(mal_anime_id)
             else:
-                mal_anime_id = mal_anime_id[0]["node"]["id"]
-                mal_list[mal_anime_id] = {
-                    "status": status,
-                }
-            print(f"Processed title: {title}")
+                error_list[status].append(title)
+                print("Not found")
 
-    print("All tasks completed")
-    return {"mal_list": mal_list, "error_list": error_list}
+    return mal_list
