@@ -3,18 +3,28 @@ import secrets
 from typing import Literal
 from datetime import datetime
 
-import dotenv
 import requests
-from django.shortcuts import HttpResponse, redirect, render
 from django.http import JsonResponse
+from asgiref.sync import async_to_sync
+from dotenv import load_dotenv, find_dotenv
+from django.shortcuts import HttpResponse, redirect, render
 
-from .HiAnime_to_MAL_API import get_hianime_list, populate_list, import_to_mal, check_cookie
+from .HiAnime_to_MAL_API import get_hianime_list, populate_list, import_to_mal, check_cookie, delete_all, get_MAL
 
-dotenv.load_dotenv()
+load_dotenv(find_dotenv()) if not os.getenv("VERCEL_ENV") else None
 
 PUBLIC_URL = "https://hianime-to-mal.serveo.net"
 MAL_TOKEN_URL = "https://myanimelist.net/v1/oauth2/token"
 MAL_AUTHORIZATION_URL = "https://myanimelist.net/v1/oauth2/authorize"
+
+
+def delete_all_anime(request):
+    headers = {"Authorization": f"Bearer {request.session['access_token']}"}
+    return JsonResponse({"status":delete_all.delete_all(headers)})
+
+def get_json_list(request):
+    headers = {"Authorization": f"Bearer {request.session['access_token']}"}
+    return JsonResponse(get_MAL.get_MAL(headers, request.GET.get("username"), int(request.GET.get("offset_inc"))))
 
 
 def is_expired(request) -> bool:
@@ -46,9 +56,6 @@ def get_token(request, grant_type: Literal["authorization_code", "refresh_token"
 def get_new_code_verifier() -> str:
     token = secrets.token_urlsafe(100)
     return token[:128]
-
-
-from asgiref.sync import async_to_sync
 
 
 def get_hi(request):

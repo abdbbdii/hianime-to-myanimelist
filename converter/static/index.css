@@ -246,7 +246,7 @@ a {
   font-family: var(--font-inria-sans);
   font-size: var(--font-size-xs);
   color: var(--color-white);
-  min-width: 2.188rem;
+  min-width: 13rem;
 }
 .guide-component,
 .input-component {
