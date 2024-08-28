@@ -23,7 +23,7 @@ def delete_all_anime(request):
     return JsonResponse({"status":delete_all.delete_all(headers)})
 
 def get_json_list(request):
-    headers = {"Authorization": f"Bearer {request.session['access_token']}"}
+    headers = {"X-MAL-CLIENT-ID": os.getenv("MAL_CLIENT_ID")}
     return JsonResponse(get_MAL.get_MAL(headers, request.GET.get("username"), int(request.GET.get("offset_inc"))))
 
 
@@ -75,8 +75,8 @@ def get_hi(request):
 
 
 def prepare(request):
+    headers = {"X-MAL-CLIENT-ID": os.getenv("MAL_CLIENT_ID")}
     try:
-        headers = {"Authorization": f"Bearer {request.session['access_token']}"}
         hi_list = request.session.get("hi_list")
         if not hi_list:
             return JsonResponse({"status": "No HiAnime list found in session"}, status=400)
