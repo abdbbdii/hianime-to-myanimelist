@@ -25,7 +25,7 @@
           {% csrf_token %}
           <div class="connect-component">
             <div class="comp-heading">
-              <div class="sub">Step 1: Authorize MyAnimeList.net to gain access to your /////////////</div>
+              <div class="sub">Step 1: Authorize MyAnimeList.net to gain access to your list</div>
             </div>
             <div class="comp-input-frame">
               <button class="button" type="button" onclick="openOauth()" id="oauth-button">
@@ -36,35 +36,8 @@
           </div>
           <div class="guide-component">
             <div class="comp-heading1">
-              <div class="sub">Step 2: Paste connect.sid cookie from <a href="https://hianime.to/">HiAnime.to</a> to import your /////////////</div>
+              <div class="sub">Step 2: Paste connect.sid cookie from <a href="https://hianime.to/">HiAnime.to</a> to import your list</div>
               <a class="showme">Show me how</a>
-            </div>
-            <div class="comp-guide">
-              <div class="instructions">
-                <div class="using-browser-go-container">
-                  <p class="using-browser">Using browser:</p>
-                  <ul class="guidelins">
-                    <li class="guide-text">Go to <a href="https://hianime.to/">HiAnime.to</a>.</li>
-                    <li class="guide-text">Press F12 to open the developer tools.</li>
-                    <li class="guide-text">Go to the Application tab.</li>
-                    <li class="guide-text">Click on Cookies > https://hianime.to.</li>
-                    <li class="guide-text">Copy the value of the connect.sid cookie.</li>
-                  </ul>
-                </div>
-              </div>
-              <div class="vline"></div>
-              <div class="instructions">
-                <div class="using-browser-go-container">
-                  <p class="using-browser">Using Extension:</p>
-                  <ul class="guidelins">
-                    <li class="guide-text">Install <a href="https://cookie-editor.com/">Cookie-Editor</a>.</li>
-                    <li class="guide-text">Go to <a href="https://hianime.to/">HiAnime.to</a>.</li>
-                    <li class="guide-text">Click on the extension icon.</li>
-                    <li class="guide-text">Click on the connect.sid cookie.</li>
-                    <li class="guide-text">Copy the value of the connect.sid cookie.</li>
-                  </ul>
-                </div>
-              </div>
             </div>
             <div class="input-component">
               <div class="input-desc">connect.sid cookie:</div>
@@ -73,13 +46,14 @@
           </div>
           <div class="connect-component">
             <div class="comp-heading2">
-              <div class="sub">Step 3: Transfer your /////////////</div>
+              <div class="sub">Step 3: Transfer your list</div>
             </div>
             <div class="comp-input-frame">
               <button class="button" type="button" id="submit">
                 <div class="button-text">Transfer</div>
               </button>
               <div class="status" id="transfer-status"></div>
+              <progress id="progress-bar" value="0" max="100" style="width: 100%"></progress>
             </div>
           </div>
         </form>
@@ -89,7 +63,6 @@
     <script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="abdbbdii" data-description="Support me on Buy me a coffee!" data-message="" data-color="#5F7FFF" data-position="Right" data-x_margin="18" data-y_margin="18"></script>
 
     <script>
-      // Check form fields on load
       window.onload = function () {
         checkOauthStatus();
         checkField();
@@ -123,7 +96,7 @@
       }
 
       function enableInput(element) {
-        element.style.cursor = "pointer";
+        element.style.cursor = "text";
         element.disabled = false;
       }
 
@@ -168,42 +141,85 @@
         disableButton(document.getElementById("submit"));
         disableInput(document.getElementById("input-text"));
 
+        document.getElementById("transfer-status").innerHTML = "Getting the list...";
+
         const formData = new FormData(document.getElementById("transferForm"));
         formData.append("hi_cookie", document.getElementById("input-text").value);
 
-        function makeRequest(url, statusMessage) {
-          document.getElementById("transfer-status").innerText = statusMessage;
-
+        function makeRequest(url, data) {
           return fetch(url, {
             method: "POST",
-            body: formData,
+            body: data,
             headers: {
               "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
             },
           }).then((response) =>
             response.json().then((data) => {
-              document.getElementById("transfer-status").innerText = data.status;
-              if (response.status !== 200) {
-                throw new Error(data.status);
+              if (!response.ok) {
+                throw new Error(data.message || data.status || "An error occurred");
               }
               return data;
             })
           );
         }
 
-        makeRequest("/get-hi", "Requesting list...")
-          .then(() => makeRequest("/prepare", "Processing list..."))
-          .then(() => makeRequest("/post-mal", "Importing to MAL..."))
-          .then(() => {
-            document.getElementById("transfer-status").style.color = "hsl(120, 100%, 80%)";
+        function updateProgressBar(transferred, total) {
+          const progressBar = document.getElementById("progress-bar");
+          const percentage = (transferred / total) * 100;
+          progressBar.style.width = percentage + "%";
+          document.getElementById("transfer-status").innerText = `Transferred ${transferred} / ${total} anime`;
+        }
+
+        let totalAnimes = 0;
+        let transferredAnimes = 0;
+        const batchSize = 10;
+
+        makeRequest("/get-hi", formData)
+          .then((data) => {
+            if (data.message !== "List retrieved successfully!") {
+              throw new Error(data.message || "Failed to retrieve list");
+            }
+            totalAnimes = data.count;
+            updateProgressBar(0, totalAnimes);
+
+            // Begin batch transfer
+            function transferBatch(fromIndex) {
+              if (fromIndex >= totalAnimes) {
+                document.getElementById("transfer-status").style.color = "hsl(120, 100%, 80%)";
+                document.getElementById("transfer-status").innerText = `Transfer complete! If you've found this tool helpful, consider showing your support by buying me a coffee—just click the button in the bottom-right corner. Your generosity is always appreciated! ❤️`;
+                document.getElementById("buymeacoffee").style.display = "block";
+                enableButton(document.getElementById("submit"));
+                enableInput(document.getElementById("input-text"));
+                return;
+              }
+
+              const toIndex = Math.min(fromIndex + batchSize, totalAnimes);
+              const batchFormData = new FormData();
+              batchFormData.append("from", fromIndex);
+              batchFormData.append("to", toIndex);
+
+              makeRequest("/send-to-mal", batchFormData)
+                .then((data) => {
+                  transferredAnimes += toIndex - fromIndex;
+                  updateProgressBar(transferredAnimes, totalAnimes);
+
+                  // Continue with the next batch
+                  transferBatch(toIndex);
+                })
+                .catch((error) => {
+                  document.getElementById("transfer-status").innerText = `Error: ${error.message}`;
+                  document.getElementById("transfer-status").style.color = "hsl(0, 100%, 80%)";
+                  enableButton(document.getElementById("submit"));
+                  enableInput(document.getElementById("input-text"));
+                });
+            }
+
+            // Start the first batch
+            transferBatch(0);
           })
           .catch((error) => {
-            document.getElementById("transfer-status").innerText = error.message;
+            document.getElementById("transfer-status").innerText = `Error: ${error.message}`;
             document.getElementById("transfer-status").style.color = "hsl(0, 100%, 80%)";
-          })
-          .finally(() => {
-            enableButton(document.getElementById("submit"));
-            enableInput(document.getElementById("input-text"));
           });
       });
 

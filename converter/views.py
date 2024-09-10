@@ -9,7 +9,7 @@ from asgiref.sync import async_to_sync
 from dotenv import load_dotenv, find_dotenv
 from django.shortcuts import HttpResponse, redirect, render
 
-from .HiAnime_to_MAL_API import get_hianime_list, populate_list, import_to_mal, check_cookie, delete_all, get_MAL
+from .HiAnime_to_MAL_API import get_hianime_list, transfer_to_mal, check_cookie, delete_all, get_MAL
 
 load_dotenv(find_dotenv()) if not os.getenv("VERCEL_ENV") else None
 
@@ -20,7 +20,8 @@ MAL_AUTHORIZATION_URL = "https://myanimelist.net/v1/oauth2/authorize"
 
 def delete_all_anime(request):
     headers = {"Authorization": f"Bearer {request.session['access_token']}"}
-    return JsonResponse({"status":delete_all.delete_all(headers)})
+    return JsonResponse({"status": delete_all.delete_all(headers)})
+
 
 def get_json_list(request):
     headers = {"X-MAL-CLIENT-ID": os.getenv("MAL_CLIENT_ID")}
@@ -59,6 +60,8 @@ def get_new_code_verifier() -> str:
 
 
 def get_hi(request):
+    if request.method != "POST":
+        return JsonResponse({"message": "Invalid request method"}, status=400)
     try:
         hi_cookie = request.POST.get("hi_cookie")
         if not hi_cookie:
@@ -67,38 +70,36 @@ def get_hi(request):
             return JsonResponse({"status": "Invalid cookie"}, status=400)
         request.session["hi_cookie"] = hi_cookie
 
-        hi_list = async_to_sync(get_hianime_list.get_list)({"connect.sid": hi_cookie})
+        hi_list = get_hianime_list.get_list({"connect.sid": hi_cookie})
+        response = {
+            "message": "List retrieved successfully!",
+            "count": len(hi_list),
+        }
         request.session["hi_list"] = hi_list
-        return JsonResponse({"status": "List Retrieved"})
+        return JsonResponse(response, status=200)
     except Exception as e:
-        return JsonResponse({"status": f"Failed to retrieve list: {str(e)}"}, status=500)
+        return JsonResponse({"message": f"Failed to retrieve list: {str(e)}"}, status=500)
 
 
-def prepare(request):
-    headers = {"X-MAL-CLIENT-ID": os.getenv("MAL_CLIENT_ID")}
+def send_to_mal(request):
+    if request.method != "POST":
+        return JsonResponse({"message": "Invalid request method"}, status=400)
+    if not request.session.get("hi_list"):
+        return JsonResponse({"message": "HiAnime list not found"}, status=400)
+
     try:
         hi_list = request.session.get("hi_list")
-        if not hi_list:
-            return JsonResponse({"status": "No HiAnime list found in session"}, status=400)
+        from_index = int(request.POST.get("from"))
+        to_index = int(request.POST.get("to"))
 
-        populated_list = async_to_sync(populate_list.populate_list)(hi_list, headers)
-        request.session["mal_list"] = populated_list
-        return JsonResponse({"status": "MAL IDs Found"})
-    except Exception as e:
-        return JsonResponse({"status": f"Failed to find MAL IDs: {str(e)}"}, status=500)
+        anime_batch = hi_list[from_index:to_index]
 
-
-def post_mal(request):
-    try:
         headers = {"Authorization": f"Bearer {request.session['access_token']}"}
-        populated_list = request.session.get("mal_list")
-        if not populated_list:
-            return JsonResponse({"status": "No populated list found in session"}, status=400)
+        error_list = transfer_to_mal.transfer_to_mal(anime_batch, headers)
 
-        async_to_sync(import_to_mal.to_mal)(populated_list["mal_list"], headers)
-        return JsonResponse({"status": "Transfer Successful!"})
+        return JsonResponse({"message": "Transfer Successful!", "error_list": error_list})
     except Exception as e:
-        return JsonResponse({"status": f"Failed to import to MAL: {str(e)}"}, status=500)
+        return JsonResponse({"message": f"Failed to transfer to MAL: {str(e)}"}, status=500)
 
 
 def index(request):
