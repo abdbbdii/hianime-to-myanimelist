@@ -186,8 +186,7 @@
             function transferBatch(fromIndex) {
               if (fromIndex >= totalAnimes) {
                 document.getElementById("transfer-status").style.color = "hsl(120, 100%, 80%)";
-                document.getElementById("transfer-status").innerText = `Transfer complete! If you've found this tool helpful, consider showing your support by buying me a coffee—just click the button in the bottom-right corner. Your generosity is always appreciated! ❤️`;
-                document.getElementById("buymeacoffee").style.display = "block";
+                document.getElementById("transfer-status").innerText = "Transfer complete! If you've found this tool helpful, consider showing your support by buying me a coffee—just click the button in the bottom-right corner. Your generosity is always appreciated! ❤️";
                 enableButton(document.getElementById("submit"));
                 enableInput(document.getElementById("input-text"));
                 return;
