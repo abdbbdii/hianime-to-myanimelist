@@ -70,12 +70,16 @@ def get_hi(request):
             return JsonResponse({"status": "Invalid cookie"}, status=400)
         request.session["hi_cookie"] = hi_cookie
 
+        if request.session.get("hi_list") and request.session.get("hi_list_date") and (datetime.now() - datetime.fromisoformat(request.session["hi_list_date"])).seconds < 300:
+            return JsonResponse({"message": "List retrieved successfully!", "count": len(request.session["hi_list"])})
+            
         hi_list = get_hianime_list.get_list({"connect.sid": hi_cookie})
         response = {
             "message": "List retrieved successfully!",
             "count": len(hi_list),
         }
         request.session["hi_list"] = hi_list
+        request.session["hi_list_date"] = datetime.now().isoformat()
         return JsonResponse(response, status=200)
     except Exception as e:
         return JsonResponse({"message": f"Failed to retrieve list: {str(e)}"}, status=500)
