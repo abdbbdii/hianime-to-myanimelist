@@ -2,10 +2,11 @@ import os
 import secrets
 from typing import Literal
 from datetime import datetime
+from datetime import timedelta
 
 import requests
+from django.utils import timezone
 from django.http import JsonResponse
-from asgiref.sync import async_to_sync
 from dotenv import load_dotenv, find_dotenv
 from django.shortcuts import HttpResponse, redirect, render
 
@@ -70,16 +71,19 @@ def get_hi(request):
             return JsonResponse({"status": "Invalid cookie"}, status=400)
         request.session["hi_cookie"] = hi_cookie
 
-        if request.session.get("hi_list") and request.session.get("hi_list_date") and (datetime.now() - datetime.fromisoformat(request.session["hi_list_date"])).seconds < 300:
-            return JsonResponse({"message": "List retrieved successfully!", "count": len(request.session["hi_list"])})
-            
+        if request.session.get("hi_list") and request.session.get("hi_list_date"):
+            hi_list_date = timezone.make_aware(datetime.fromisoformat(request.session["hi_list_date"]), timezone.get_default_timezone())
+            if timezone.now() - hi_list_date < timedelta(seconds=300):
+                return JsonResponse({"message": "List retrieved successfully!", "count": len(request.session["hi_list"])})
+
+        # Retrieve the list and store the current UTC time
         hi_list = get_hianime_list.get_list({"connect.sid": hi_cookie})
         response = {
             "message": "List retrieved successfully!",
             "count": len(hi_list),
         }
         request.session["hi_list"] = hi_list
-        request.session["hi_list_date"] = datetime.now().isoformat()
+        request.session["hi_list_date"] = timezone.now().isoformat()  # Store time in UTC
         return JsonResponse(response, status=200)
     except Exception as e:
         return JsonResponse({"message": f"Failed to retrieve list: {str(e)}"}, status=500)
