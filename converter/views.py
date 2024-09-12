@@ -107,8 +107,9 @@ def send_to_mal(request):
 
         anime_batch = hi_list[from_index:to_index]
 
-        headers = {"Authorization": f"Bearer {request.session['access_token']}"}
-        error_list = transfer_to_mal.transfer_to_mal(anime_batch, headers)
+        user_headers = {"Authorization": f"Bearer {request.session['access_token']}"}
+        client_headers = {"X-MAL-CLIENT-ID": os.getenv("MAL_CLIENT_ID")}
+        error_list = transfer_to_mal.transfer_to_mal(anime_batch, user_headers=user_headers, client_headers=client_headers)
 
         return JsonResponse({"message": "Transfer Successful!", "error_list": error_list})
     except Exception as e:

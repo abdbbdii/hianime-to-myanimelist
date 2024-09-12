@@ -27,7 +27,7 @@ def import_to_mal(id: int, status: str, headers: dict):
     requests.put(f"https://api.myanimelist.net/v2/anime/{id}/my_list_status", headers=headers, data={"status": status})
 
 
-def transfer_to_mal(hi_list: list[dict], headers: dict):
+def transfer_to_mal(hi_list: list[dict], user_headers: dict, client_headers: dict):
     """
     Transfer HiAnime list to MAL list
     :param mal_list: list of anime to transfer
@@ -45,12 +45,12 @@ def transfer_to_mal(hi_list: list[dict], headers: dict):
             if entry.exists():
                 anime_id = entry.first().anime_id
             else:
-                anime_id = get_mal_id(anime["title"], headers)
+                anime_id = get_mal_id(anime["title"], client_headers)
                 Cache.objects.create(anime_id=anime_id, title=anime["title"])
             if not anime_id:
                 error_list.append({"title": anime["title"], "reason": "Anime not found on MAL"})
                 continue
-            import_to_mal(anime_id, anime["status"], headers)
+            import_to_mal(anime_id, anime["status"], user_headers)
         except Exception as e:
             error_list.append({"title": anime["title"], "reason": str(e)})
     return error_list
